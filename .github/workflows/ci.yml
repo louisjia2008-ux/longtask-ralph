@@ -1,0 +1,28 @@
+name: Verify
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Shell syntax
+        run: |
+          for script in .agents/skills/longtask-ralph/scripts/*.sh; do
+            bash -n "$script"
+          done
+      - name: Offline regression suite
+        run: python3 -B -m unittest discover -s tests -v
+      - name: Build skill ZIP
+        run: python3 scripts/build-release.py --output release/0.1.0
+      - run: python3 scripts/privacy_guard.py --history
+      - run: python3 scripts/privacy_guard.py --artifacts release/0.1.0/*

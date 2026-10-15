@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Long Task"
+  short_description: "Run long Codex tasks with checkpoints"
+  default_prompt: "Use $longtask-ralph to run this repository task until done: <describe the goal>."
