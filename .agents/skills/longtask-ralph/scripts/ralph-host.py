@@ -153,10 +153,15 @@ def record_verification(status):
     root, _ = root_check()
     runtime = runtime_check(root, required=True)
     state = load(runtime / "state.json")
-    record = {"status": status, "iteration": state.get("current_iteration", 0), "checked_at": stamp()}
+    previous_path = runtime / "host-verification.json"
+    previous = load(previous_path) if previous_path.is_file() else {}
+    failures = previous.get("consecutive_failures", 0)
+    failures = failures if type(failures) is int and failures >= 0 else 0
+    failures = failures + 1 if status == "FAIL" else 0
+    record = {"status": status, "iteration": state.get("current_iteration", 0), "checked_at": stamp(), "consecutive_failures": failures}
     save(runtime / "host-verification.json", record)
     state["last_verification"] = record.copy()
-    state["verifier_failures"] = int(state.get("verifier_failures", 0)) + 1 if status == "FAIL" else 0
+    state["verifier_failures"] = failures
     if status != "PASS" and (state.get("completion") in ("RALPH_DONE", "RALPH_COMPLETE") or state.get("requested_completion") == "RALPH_DONE"):
         state["completion"] = "RALPH_CONTINUE"
         state["requested_completion"] = "RALPH_DONE"
@@ -184,7 +189,10 @@ def completion_errors(root, state, tasks):
                 continue
             if task.get("blocked") or task.get("status") == "failed_blocked":
                 errors.append("Blocked task remains")
-            if task.get("required", True) and task.get("status") != "done":
+            required = task.get("required", True)
+            if type(required) is not bool:
+                errors.append("Task required flag must be a boolean")
+            elif required and task.get("status") != "done":
                 errors.append("Required task is not done")
     report = runtime / "final_report.md"
     if not report.is_file() or report.is_symlink():

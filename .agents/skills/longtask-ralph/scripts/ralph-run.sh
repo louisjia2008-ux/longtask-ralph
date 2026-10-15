@@ -105,3 +105,4 @@ while [ "$count" -lt "$MAX_ITERATIONS" ]; do
   if [ "$count" -lt "$MAX_ITERATIONS" ]; then sleep "$SLEEP_SECONDS"; fi
 done
 python3 "$SCRIPT_DIR/ralph-update-state.py" stop-max-iterations "Reached the configured iteration limit"
+exit 1

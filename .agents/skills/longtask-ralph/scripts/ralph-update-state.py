@@ -51,6 +51,7 @@ def default_state() -> dict[str, Any]:
         "last_verification": {"status": "unknown", "command": "", "summary": ""},
         "blockers": [],
         "no_diff_iterations": 0,
+        "verifier_failures": 0,
         "started_at": stamp,
         "updated_at": stamp,
     }
@@ -103,6 +104,10 @@ def normalize_state(raw: dict[str, Any]) -> dict[str, Any]:
             base["last_verification"] = raw["last_verification"]
         base["blockers"] = raw.get("blockers", base["blockers"]) if isinstance(raw.get("blockers", []), list) else []
         base["no_diff_iterations"] = raw.get("no_diff_iterations", base["no_diff_iterations"])
+        failures = raw.get("verifier_failures", 0)
+        base["verifier_failures"] = failures if type(failures) is int and failures >= 0 else 0
+        if raw.get("requested_completion") == "RALPH_DONE":
+            base["requested_completion"] = "RALPH_DONE"
         base["started_at"] = raw.get("started_at") or raw.get("created_at") or base["started_at"]
         base["updated_at"] = raw.get("updated_at") or base["updated_at"]
         if "completion" not in raw:
